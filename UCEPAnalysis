@@ -1,0 +1,65 @@
+library(tidyverse)
+library(nnet)
+library(MASS)
+
+# Age distribution appears quite similar for all parties in terms of shape, but people with strong
+# but people with strong affiliation may tend to be older. People with other affiliation tend to be a bit younger
+ggplot(ucep, aes(x = party7, y = age)) +
+  geom_boxplot(fill = "lightblue", color = "blue") +
+  labs(title = "Box Plot of Age by Party Affiliation", x = "Party Affiliation", y = "Age") +
+  theme_minimal()
+
+# Read in data based on cleaned data file
+merged_df <- read_csv("ucep.csv")
+merged_df <- subset(merged_df, select = c("party7", "cd", "age", "income", "educ", "religion", 
+                                          "ideol", "sex", "race", "marstat", "empstat", "year"))
+
+# Prep for analysis
+merged_df$cd <- as.character(merged_df$cd)
+merged_df$year <- as.character(merged_df$year)
+merged_df$age <- as.numeric(merged_df$age)
+merged_df$age[is.na(merged_df$age)] <- median(merged_df$age, na.rm = TRUE)
+ucep  <- replace(merged_df, is.na(merged_df), "No Response")
+ucep <- subset(ucep, party7 != "No Response")
+View(ucep)
+# Create factors
+ucep$party7 <- factor(ucep$party7)
+ucep$cd <- factor(ucep$cd)
+ucep$educ <- factor(ucep$educ)
+ucep$religion <- factor(ucep$religion)
+ucep$ideol <- factor(ucep$ideol)
+ucep$sex <- factor(ucep$sex)
+ucep$race <- factor(ucep$race)
+ucep$marstat <- factor(ucep$marstat)
+ucep$empstat <- factor(ucep$empstat)
+ucep$year <- factor(ucep$year)
+ucep$party7 <- relevel(ucep$party7, ref = "Other")
+# Initialize multinomial logistics regression model
+model <- multinom(party7 ~ . - income, data = ucep)
+
+# Summarize the model
+summary(model)
+
+# Extract coefficient information from the model
+coefficients <- coef(model)
+coef_ind <- coefficients["Independent", ]
+coef_ind_lean_rep <- coefficients["Independent leaning Republican", ]
+coef_ind_lean_dem <- coefficients["Independent leaning Democrat", ]
+coef_weak_rep <- coefficients["Not so strong Republican", ]
+coef_weak_dem <- coefficients["Not so strong Democrat", ]
+
+# Create a data frame from the coefficient matrix
+coef_df <- as.data.frame(coefficients)
+View(coef_df)
+# Create an empty data frame to store odds ratios
+odds_ratio_df <- as.data.frame(exp(coefficients))
+
+# We compare Euclidean distance of the coefficients and find that independent leaners are 
+# more similar to weakly affiliated people than they are to pure independents 
+# in terms of these demographics overall
+euclidean_distance1 <- sqrt(sum((coef_ind - coef_ind_lean_rep)^2))
+euclidean_distance2 <- sqrt(sum((coef_weak_rep - coef_ind_lean_rep)^2))
+print(euclidean_distance1 - euclidean_distance2)
+euclidean_distance3 <- sqrt(sum((coef_ind - coef_ind_lean_dem)^2))
+euclidean_distance4 <- sqrt(sum((coef_weak_dem - coef_ind_lean_dem)^2))
+print(euclidean_distance3 - euclidean_distance4)
