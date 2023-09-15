@@ -1,0 +1,539 @@
+library(tidyverse)
+library(dplyr)
+library(readstata13)
+
+# Read in Stat Files
+ucep_2016 = read.dta13("2016 General.dta")
+ucep_2014 = read.dta13("2014 General.dta")
+ucep_2012 = read.dta13("2012 General.dta")
+ucep_2010 = read.dta13("2010 General.dta")
+ucep_2008 = read.dta13("2008 General.dta")
+ucep_2006 = read.dta13("2006 General.dta")
+ucep_2004 = read.dta13("2004 General.dta")
+ucep_2002 = read.dta13("2002 General.dta")
+ucep_2000 = read.dta13("2000 General.dta")
+ucep_1998 = read.dta13("1998 General.dta")
+ucep_1996 = read.dta13("1996 General.dta")
+ucep_1994 = read.dta13("1994 General.dta")
+ucep_1992 = read.dta13("1992 General.dta")
+ucep_1990 = read.dta13("1990 General.dta")
+ucep_1988 = read.dta13("1988 General.dta")
+ucep_1986 = read.dta13("1986 General.dta")
+ucep_1984 = read.dta13("1984 General.dta")
+ucep_1982 = read.dta13("1982 General.dta")
+
+# Started doing some initial cleaning
+ucep_1982$party7 <- ifelse(ucep_1982$party7 == "strong Republican", "Strong Republican", ucep_1982$party7)
+ucep_1982$party7 <- ifelse(ucep_1982$party7 == "strong Democrat", "Strong Democrat", ucep_1982$party7)
+ucep_1982$party7 <- ifelse(ucep_1982$party7 == "not-so-strong Republican", "Not so strong Republican", ucep_1982$party7)
+ucep_1982$party7 <- ifelse(ucep_1982$party7 == "not-so-strong Democrat", "Not so strong Democrat", ucep_1982$party7)
+ucep_1982$party7 <- ifelse(ucep_1982$party7 == "independent", "Independent", ucep_1982$party7)
+ucep_1982$party7 <- ifelse(ucep_1982$party7 == "independent-leaning Democrat", "Independent leaning Democrat", ucep_1982$party7)
+ucep_1982$party7 <- ifelse(ucep_1982$party7 == "independent-leaning Republican", "Independent leaning Republican", ucep_1982$party7)
+ucep_1982$party7 <- ifelse(ucep_1982$party7 == "other", "Other", ucep_1982$party7)
+ucep_1982$party7 <- ifelse(ucep_1982$party7 == "prefer not to say", "Prefer not to say", ucep_1982$party7)
+ucep_2010$party7 <- ifelse(ucep_2010$party7 == "other", "Other", ucep_2010$party7)
+ucep_2010$party7 <- ifelse(ucep_2010$party7 == "Independent leaning democrat", "Independent leaning Democrat", ucep_2010$party7)
+ucep_2010$party7 <- ifelse(ucep_2010$party7 == "Independent leaning republican", "Independent leaning Republican", ucep_2010$party7)
+ucep_2010$party7 <- ifelse(ucep_2010$party7 == "Not so strong republican", "Not so strong Republican", ucep_2010$party7)
+ucep_2010$party7 <- ifelse(ucep_2010$party7 == "Not so strong democrat", "Not so strong Democrat", ucep_2010$party7)
+ucep_2010$party7 <- ifelse(ucep_2010$party7 == "Strong republican", "Strong Republican", ucep_2010$party7)
+ucep_2010$party7 <- ifelse(ucep_2010$party7 == "Strong democrat", "Strong Democrat", ucep_2010$party7)
+ucep_2008$party7 <- ifelse(ucep_2008$party7 == "Don<92>t know", "Don't know", ucep_2008$party7)
+ucep_2012$party7 <- ifelse(ucep_2012$party7 == "Skipped", "", ucep_2012$party7)
+ucep_2012$party7 <- ifelse(ucep_2012$party7 == "Inapproriate", "", ucep_2012$party7)
+ucep_2004$cd <- ifelse(ucep_2004$cd == "Congressional District 1", "1", ucep_2004$cd)
+ucep_2004$cd <- ifelse(ucep_2004$cd == "Congressional District 3", "3", ucep_2004$cd)
+ucep_2004$cd <- ifelse(ucep_2004$cd == "Congressional District 2", "2", ucep_2004$cd)
+ucep_2000$cd <- ifelse(ucep_2000$cd == "First District", "1", ucep_2004$cd)
+ucep_2000$cd <- ifelse(ucep_2000$cd == "Second District", "2", ucep_2004$cd)
+ucep_2000$cd <- ifelse(ucep_2000$cd == "Third District", "3", ucep_2004$cd)
+ucep_2016$cd <- as.character(ucep_2016$cd)
+ucep_2014$cd <- as.character(ucep_2014$cd)
+ucep_2012$cd <- as.character(ucep_2012$cd)
+ucep_2010$cd <- as.character(ucep_2010$cd)
+ucep_2008$cd <- as.character(ucep_2008$cd)
+ucep_2006$cd <- as.character(ucep_2006$cd)
+ucep_2004$cd <- as.character(ucep_2004$cd)
+ucep_2002$cd <- as.character(ucep_2002$cd)
+ucep_2000$cd <- as.character(ucep_2000$cd)
+ucep_1998$cd <- as.character(ucep_1998$cd)
+ucep_1996$cd <- as.character(ucep_1996$cd)
+ucep_1994$cd <- as.character(ucep_1994$cd)
+ucep_1992$cd <- as.character(ucep_1992$cd)
+ucep_1990$cd <- as.character(ucep_1990$cd)
+ucep_1988$cd <- as.character(ucep_1988$cd)
+ucep_1986$cd <- as.character(ucep_1986$cd)
+ucep_1984$cd <- as.character(ucep_1984$cd)
+ucep_1982$cd <- as.character(ucep_1982$cd)
+ucep_1992$district <- as.character(ucep_1992$district)
+ucep_1996$yearborn <- as.character(ucep_1996$yearborn)
+ucep_1990$caseid <- as.numeric(ucep_1990$caseid)
+ucep_1982$sex <- as.character(ucep_1982$sex)
+
+# Create common column names on which rows can be binded
+ucep_2014 <- ucep_2014 %>% rename(race = race14)
+ucep_2016 <- ucep_2016 %>% rename(income = income16, educ = educ16, 
+                                  sex = sex16, marstat = marstat16, 
+                                  religion = religion16, ideol = ideology16)
+ucep_2014 <- ucep_2014 %>% rename(income = income14, educ = educ14, 
+                                  sex = gender14, marstat = marstat14, 
+                                  religion = relig14, ideol = ideo14, age = age14, 
+                                  active = active14, empstat = emp14)
+ucep_2012 <- ucep_2012 %>% rename(income = income12, educ = educ12, 
+                                  sex = sex12, marstat = marstat12, 
+                                  religion = religion12, ideol = ideology12)
+ucep_2010 <- ucep_2010 %>% rename(income = income10, educ = educate10, 
+                                  sex = sex10, marstat = marstat10, 
+                                  religion = religion10, ideol = ideology10)
+ucep_2008 <- ucep_2008 %>% rename(income = income08, educ = educate08, 
+                                  sex = sex08, marstat = marstat08, 
+                                  religion = relig6, ideol = ideology08)
+ucep_2006 <- ucep_2006 %>% rename(income = income06, educ = educate06, 
+                                  sex = sex06, marstat = marstat06, 
+                                  religion = religion06, ideol = ideology06, race = race06)
+ucep_2004 <- ucep_2004 %>% rename(income = INCOME04, educ = educate04, 
+                                  sex = sex04, marstat = marstat04, 
+                                  religion = religion04, ideol = ideology04, 
+                                  race = RACE04, age = yearborn)
+ucep_2002 <- ucep_2002 %>% rename(income = INCOME02, educ = educate02, 
+                                  sex = sex02, marstat = marstat02, 
+                                  religion = religion02, ideol = ideology02, 
+                                  race = RACE02, age = yearborn)
+ucep_2000 <- ucep_2000 %>% rename(income = INCOME00, educ = educate00, 
+                                  sex = sex00, marstat = marstat00, 
+                                  religion = religion00, ideol = ideology00, 
+                                  race = RACE00, age = yearborn)
+ucep_1998 <- ucep_1998 %>% rename(ideol = ideol98, marstat = marstat98, 
+                                  religion = religion98, income = income98, 
+                                  educ = educate98, sex = sex98)
+ucep_1996 <- ucep_1996 %>% rename(income = income96, educ = educate96, 
+                                  sex = sex96, marstat = marstat96, 
+                                  religion = religion96, ideol = ideol96)
+ucep_1994 <- subset(ucep_1994, select = -ideol)
+ucep_1994 <- ucep_1994 %>% rename(ideol = ideol94, marstat = marstat94,  
+                                  income = income94, educ = educate94,  
+                                  religion = religion94, sex = sex94)
+ucep_1992 <- subset(ucep_1992, select = -ideol)
+ucep_1992 <- ucep_1992 %>% rename(ideol = ideol92, marstat = marstat92,  
+                                  income = income92, educ = educate92,  
+                                  religion = religion92, sex = sex92)
+ucep_1990 <- ucep_1990 %>% rename(ideol = ideol90, marstat = marstat90,  
+                                  income = income90, educ = educate90,  
+                                  religion = religion90, sex = sex90)
+ucep_1988 <- ucep_1988 %>% rename(ideol = ideol88, marstat = marstat88,  
+                                  income = income88, educ = educate88,  
+                                  religion = religion88, sex = sex88)
+ucep_1986 <- subset(ucep_1986, select = -ideol)
+ucep_1986 <- ucep_1986 %>% rename(ideol = ideol86, marstat = marstat86,  
+                                  income = income86, educ = educate86,  
+                                  religion = religion86, sex = sex86)
+ucep_1984 <- subset(ucep_1984, select = -ideol)
+ucep_1984 <- ucep_1984 %>% rename(ideol = ideol84,  
+                                  income = income84, educ = educate84,  
+                                  religion = religion84, sex = sex84)
+ucep_1982 <- subset(ucep_1982, select = -c(ideol, sex))
+ucep_1982 <- ucep_1982 %>% rename(ideol = ideol82,  
+                                  income = income82, educ = educate82,  
+                                  religion = religion82, sex = sex82)
+
+# Reduce data to subsets of desired columns. Some years don't have all the columns
+ucep_2016 <- subset(ucep_2016, select = c("party7", "cd", "age", "income", "educ", "religion", 
+                                          "ideol", "sex", "race", "marstat", "empstat", "year"))
+ucep_2014 <- subset(ucep_2014, select = c("party7", "cd", "age", "income", "educ", "religion", 
+                                          "ideol", "sex", "race", "marstat", "empstat", "year"))
+ucep_2012 <- subset(ucep_2012, select = c("party7", "cd", "age", "income", "educ", "religion", 
+                                          "ideol", "sex", "race", "marstat", "empstat", "year"))
+ucep_2010 <- subset(ucep_2010, select = c("party7", "cd", "age", "income", "educ", "religion", 
+                                          "ideol", "sex", "race", "marstat", "empstat", "year"))
+ucep_2008 <- subset(ucep_2008, select = c("party7", "cd", "age", "income", "educ", "religion", 
+                                          "ideol", "sex", "race", "marstat", "empstat", "year"))
+ucep_2006 <- subset(ucep_2006, select = c("party7", "cd", "age", "income", "educ", "religion", 
+                                          "ideol", "sex", "race", "marstat", "empstat", "year"))
+ucep_2004 <- subset(ucep_2004, select = c("party7", "cd", "age", "income", "educ", "religion", 
+                                          "ideol", "sex", "race", "marstat", "empstat", "year"))
+ucep_2002 <- subset(ucep_2002, select = c("party7", "cd", "age", "income", "educ", "religion", 
+                                          "ideol", "sex", "race", "marstat", "empstat", "year"))
+ucep_2000 <- subset(ucep_2000, select = c("party7", "cd", "age", "income", "educ", "religion", 
+                                          "ideol", "sex", "race", "marstat", "empstat", "year"))
+ucep_1998 <- subset(ucep_1998, select = c("party7", "cd", "age", "income", "educ", "religion", 
+                                          "ideol", "sex", "race", "marstat", "empstat", "year"))
+ucep_1996 <- subset(ucep_1996, select = c("party7", "cd", "age", "income", "educ", "religion", 
+                                          "ideol", "sex", "race", "marstat", "empstat", "year"))
+ucep_1994 <- subset(ucep_1994, select = c("party7", "cd", "age", "income", "educ", "religion", 
+                                          "ideol", "sex", "race", "marstat", "year"))
+ucep_1992 <- subset(ucep_1992, select = c("party7", "cd", "age", "income", "educ", "religion", 
+                                          "ideol", "sex", "race", "marstat", "year"))
+ucep_1990 <- subset(ucep_1990, select = c("party7", "cd", "age", "income", "educ", "religion", 
+                                          "ideol", "sex", "race", "marstat", "year"))
+ucep_1988 <- subset(ucep_1988, select = c("party7", "cd", "age", "income", "educ", "religion", 
+                                          "ideol", "sex", "race", "marstat", "year"))
+ucep_1986 <- subset(ucep_1986, select = c("party7", "cd", "age", "income", "educ", "religion", 
+                                          "ideol", "sex", "race", "marstat", "year"))
+ucep_1984 <- subset(ucep_1984, select = c("party7", "cd", "age", "income", "educ", "religion", 
+                                          "ideol", "sex", "race", "year"))
+ucep_1982 <- subset(ucep_1982, select = c("party7", "cd", "age", "income", "educ", "religion", 
+                                          "ideol", "sex", "race", "empstat", "year"))
+
+# Change numbers to corresponding values. Look at UCEP codebooks for keys
+ucep_1998$ideol <- ifelse(ucep_1998$ideol == "2", "Moderately conservative", ucep_1998$ideol)
+ucep_1998$ideol <- ifelse(ucep_1998$ideol == "3", "Neither, middle of the road", ucep_1998$ideol)
+ucep_1998$ideol <- ifelse(ucep_1998$ideol == "4", "Moderately liberal", ucep_1998$ideol)
+ucep_1998$ideol <- ifelse(ucep_1998$ideol == "5", "Strongly liberal", ucep_1998$ideol)
+ucep_1996$ideol <- ifelse(ucep_1996$ideol == "1", "Strongly conservative", ucep_1996$ideol)
+ucep_1996$ideol <- ifelse(ucep_1996$ideol == "2", "Moderately conservative", ucep_1996$ideol)
+ucep_1996$ideol <- ifelse(ucep_1996$ideol == "3", "Neither, middle of the road", ucep_1996$ideol)
+ucep_1996$ideol <- ifelse(ucep_1996$ideol == "4", "Moderately liberal", ucep_1996$ideol)
+ucep_1996$ideol <- ifelse(ucep_1996$ideol == "5", "Strongly liberal", ucep_1996$ideol)
+ucep_1994$ideol <- ifelse(ucep_1994$ideol == "1", "Strongly conservative", ucep_1994$ideol)
+ucep_1994$ideol <- ifelse(ucep_1994$ideol == "2", "Moderately conservative", ucep_1994$ideol)
+ucep_1994$ideol <- ifelse(ucep_1994$ideol == "3", "Neither, middle of the road", ucep_1994$ideol)
+ucep_1994$ideol <- ifelse(ucep_1994$ideol == "4", "Moderately liberal", ucep_1994$ideol)
+ucep_1994$ideol <- ifelse(ucep_1994$ideol == "5", "Strongly liberal", ucep_1994$ideol)
+ucep_1992$ideol <- ifelse(ucep_1992$ideol == "1", "Strongly conservative", ucep_1992$ideol)
+ucep_1992$ideol <- ifelse(ucep_1992$ideol == "2", "Moderately conservative", ucep_1992$ideol)
+ucep_1992$ideol <- ifelse(ucep_1992$ideol == "3", "Neither, middle of the road", ucep_1992$ideol)
+ucep_1992$ideol <- ifelse(ucep_1992$ideol == "4", "Moderately liberal", ucep_1992$ideol)
+ucep_1992$ideol <- ifelse(ucep_1992$ideol == "5", "Strongly liberal", ucep_1992$ideol)
+ucep_1990$ideol <- ifelse(ucep_1990$ideol == "1", "Strongly conservative", ucep_1990$ideol)
+ucep_1990$ideol <- ifelse(ucep_1990$ideol == "2", "Moderately conservative", ucep_1990$ideol)
+ucep_1990$ideol <- ifelse(ucep_1990$ideol == "3", "Neither, middle of the road", ucep_1990$ideol)
+ucep_1990$ideol <- ifelse(ucep_1990$ideol == "4", "Moderately liberal", ucep_1990$ideol)
+ucep_1990$ideol <- ifelse(ucep_1990$ideol == "5", "Strongly liberal", ucep_1990$ideol)
+ucep_1988$ideol <- ifelse(ucep_1988$ideol == "1", "Strongly conservative", ucep_1988$ideol)
+ucep_1988$ideol <- ifelse(ucep_1988$ideol == "2", "Moderately conservative", ucep_1988$ideol)
+ucep_1988$ideol <- ifelse(ucep_1988$ideol == "3", "Neither, middle of the road", ucep_1988$ideol)
+ucep_1988$ideol <- ifelse(ucep_1988$ideol == "4", "Moderately liberal", ucep_1988$ideol)
+ucep_1988$ideol <- ifelse(ucep_1988$ideol == "5", "Strongly liberal", ucep_1988$ideol)
+ucep_1986$ideol <- ifelse(ucep_1986$ideol == "1", "Strongly conservative", ucep_1986$ideol)
+ucep_1986$ideol <- ifelse(ucep_1986$ideol == "2", "Moderately conservative", ucep_1986$ideol)
+ucep_1986$ideol <- ifelse(ucep_1986$ideol == "3", "Neither, middle of the road", ucep_1986$ideol)
+ucep_1986$ideol <- ifelse(ucep_1986$ideol == "4", "Moderately liberal", ucep_1986$ideol)
+ucep_1986$ideol <- ifelse(ucep_1986$ideol == "5", "Strongly liberal", ucep_1986$ideol)
+ucep_1982$ideol <- ifelse(ucep_1982$ideol == "1", "Strongly conservative", ucep_1982$ideol)
+ucep_1982$ideol <- ifelse(ucep_1982$ideol == "2", "Moderately conservative", ucep_1982$ideol)
+ucep_1982$ideol <- ifelse(ucep_1982$ideol == "3", "Neither, middle of the road", ucep_1982$ideol)
+ucep_1982$ideol <- ifelse(ucep_1982$ideol == "4", "Moderately liberal", ucep_1982$ideol)
+ucep_1982$ideol <- ifelse(ucep_1982$ideol == "5", "Strongly liberal", ucep_1982$ideol)
+
+ucep_1982$sex <- ifelse(ucep_1982$sex == "1", "Male", ucep_1982$sex)
+ucep_1982$sex <- ifelse(ucep_1982$sex == "0", "Female", ucep_1982$sex)
+
+ucep_1998$marstat <- ifelse(ucep_1998$marstat == "1", "Married", ucep_1998$marstat)
+ucep_1998$marstat <- ifelse(ucep_1998$marstat == "2", "Divorced", ucep_1998$marstat)
+ucep_1998$marstat <- ifelse(ucep_1998$marstat == "3", "Widowed", ucep_1998$marstat)
+ucep_1998$marstat <- ifelse(ucep_1998$marstat == "4", "Single", ucep_1998$marstat)
+ucep_1996$marstat <- ifelse(ucep_1996$marstat == "1", "Married", ucep_1996$marstat)
+ucep_1996$marstat <- ifelse(ucep_1996$marstat == "2", "Divorced", ucep_1996$marstat)
+ucep_1996$marstat <- ifelse(ucep_1996$marstat == "3", "Widowed", ucep_1996$marstat)
+ucep_1996$marstat <- ifelse(ucep_1996$marstat == "4", "Single", ucep_1996$marstat)
+ucep_1994$marstat <- ifelse(ucep_1994$marstat == "1", "Married", ucep_1994$marstat)
+ucep_1994$marstat <- ifelse(ucep_1994$marstat == "2", "Divorced", ucep_1994$marstat)
+ucep_1994$marstat <- ifelse(ucep_1994$marstat == "3", "Widowed", ucep_1994$marstat)
+ucep_1994$marstat <- ifelse(ucep_1994$marstat == "4", "Single", ucep_1994$marstat)
+ucep_1992$marstat <- ifelse(ucep_1992$marstat == "1", "Married", ucep_1992$marstat)
+ucep_1992$marstat <- ifelse(ucep_1992$marstat == "2", "Divorced", ucep_1992$marstat)
+ucep_1992$marstat <- ifelse(ucep_1992$marstat == "3", "Widowed", ucep_1992$marstat)
+ucep_1992$marstat <- ifelse(ucep_1992$marstat == "4", "Single", ucep_1992$marstat)
+ucep_1990$marstat <- ifelse(ucep_1990$marstat == "1", "Married", ucep_1990$marstat)
+ucep_1990$marstat <- ifelse(ucep_1990$marstat == "2", "Divorced", ucep_1990$marstat)
+ucep_1990$marstat <- ifelse(ucep_1990$marstat == "3", "Widowed", ucep_1990$marstat)
+ucep_1990$marstat <- ifelse(ucep_1990$marstat == "4", "Single", ucep_1990$marstat)
+ucep_1988$marstat <- ifelse(ucep_1988$marstat == "1", "Married", ucep_1988$marstat)
+ucep_1988$marstat <- ifelse(ucep_1988$marstat == "2", "Divorced", ucep_1988$marstat)
+ucep_1988$marstat <- ifelse(ucep_1988$marstat == "3", "Widowed", ucep_1988$marstat)
+ucep_1988$marstat <- ifelse(ucep_1988$marstat == "4", "Single", ucep_1988$marstat)
+ucep_1986$marstat <- ifelse(ucep_1986$marstat == "1", "Married", ucep_1986$marstat)
+ucep_1986$marstat <- ifelse(ucep_1986$marstat == "2", "Divorced", ucep_1986$marstat)
+ucep_1986$marstat <- ifelse(ucep_1986$marstat == "3", "Widowed", ucep_1986$marstat)
+ucep_1986$marstat <- ifelse(ucep_1986$marstat == "4", "Single", ucep_1986$marstat)
+
+ucep_1982$empstat <- ifelse(ucep_1982$empstat == "1", "Employed by someone else", ucep_1982$empstat)
+ucep_1982$empstat <- ifelse(ucep_1982$empstat == "Self-employed", "Self employed", ucep_1982$empstat)
+ucep_1982$empstat <- ifelse(ucep_1982$empstat == "3", "Unemployed", ucep_1982$empstat)
+ucep_1982$empstat <- ifelse(ucep_1982$empstat == "4", "Homemaker", ucep_1982$empstat)
+ucep_1982$empstat <- ifelse(ucep_1982$empstat == "5", "Student", ucep_1982$empstat)
+ucep_1982$empstat <- ifelse(ucep_1982$empstat == "6", "Retired", ucep_1982$empstat)
+ucep_1982$empstat <- ifelse(ucep_1982$empstat == "9", "Prefer not to say", ucep_1982$empstat)
+ucep_1998$empstat <- ifelse(ucep_1998$empstat == "1", "Employed by someone else", ucep_1998$empstat)
+ucep_1998$empstat <- ifelse(ucep_1998$empstat == "Self-employed", "Self employed", ucep_1998$empstat)
+ucep_1998$empstat <- ifelse(ucep_1998$empstat == "3", "Unemployed", ucep_1998$empstat)
+ucep_1998$empstat <- ifelse(ucep_1998$empstat == "4", "Homemaker", ucep_1998$empstat)
+ucep_1998$empstat <- ifelse(ucep_1998$empstat == "5", "Student", ucep_1998$empstat)
+ucep_1998$empstat <- ifelse(ucep_1998$empstat == "6", "Retired", ucep_1998$empstat)
+ucep_1998$empstat <- ifelse(ucep_1998$empstat == "9", "Prefer not to say", ucep_1998$empstat)
+ucep_1996$empstat <- ifelse(ucep_1996$empstat == "1", "Employed by someone else", ucep_1996$empstat)
+ucep_1996$empstat <- ifelse(ucep_1996$empstat == "Self-employed", "Self employed", ucep_1996$empstat)
+ucep_1996$empstat <- ifelse(ucep_1996$empstat == "3", "Unemployed", ucep_1996$empstat)
+ucep_1996$empstat <- ifelse(ucep_1996$empstat == "4", "Homemaker", ucep_1996$empstat)
+ucep_1996$empstat <- ifelse(ucep_1996$empstat == "5", "Student", ucep_1996$empstat)
+ucep_1996$empstat <- ifelse(ucep_1996$empstat == "6", "Retired", ucep_1996$empstat)
+ucep_1996$empstat <- ifelse(ucep_1996$empstat == "9", "Prefer not to say", ucep_1996$empstat)
+
+all_years <- list(ucep_2016, ucep_2014, ucep_2012, ucep_2010, ucep_2008, ucep_2006, 
+                  ucep_2004, ucep_2002, ucep_2000, ucep_1998, ucep_1996, ucep_1994, 
+                  ucep_1992, ucep_1990, ucep_1988, ucep_1986, ucep_1984, ucep_1982)
+
+# Merge data frames row-wise with fill for missing columns
+merged_df <- bind_rows(all_years, .id = "source")
+# Remove source column
+merged_df <- subset(merged_df, select = c("party7", "cd", "age", "income", "educ", "religion", 
+                                          "ideol", "sex", "race", "marstat", "empstat", "year"))
+# Age handling
+merged_df$age[merged_df$age < 18 | (merged_df$age > 100 & merged_df$age < 1800) | merged_df$age > 1998] <- NA
+not_missing = !is.na(merged_df$year) & !is.na(merged_df$age)
+merged_df$age[merged_df$age > 100 & not_missing] <- merged_df$year[merged_df$age > 100 & not_missing] - merged_df$age[merged_df$age > 100 & not_missing]
+merged_df$age[merged_df$age < 18 | (merged_df$age > 100 & merged_df$age < 1800) | merged_df$age > 1998] <- NA
+
+# extra cleaning not picked up by the steps below
+merged_df$party7 <- ifelse(merged_df$party7 == "", NA, merged_df$party7)
+merged_df$party7 <- ifelse(merged_df$party7 == "Don't know", NA, merged_df$party7)
+merged_df$party7 <- ifelse(merged_df$party7 == "Prefer not to say", NA, merged_df$party7)
+merged_df$race <- ifelse(merged_df$race == "", NA, merged_df$race)
+merged_df$race <- ifelse(merged_df$race == "skipped", NA, merged_df$race)
+merged_df$race <- ifelse(merged_df$race == "white", "White", merged_df$race)
+merged_df$race <- ifelse(merged_df$race == "black", "Black", merged_df$race)
+merged_df$race <- ifelse(merged_df$race == "hispanic", "Hispanic / Latino", merged_df$race)
+merged_df$race <- ifelse(merged_df$race == "american indian", "American Indian / Native American", merged_df$race)
+merged_df$race <- ifelse(merged_df$race == "inapproriate", NA, merged_df$race)
+merged_df$income <- ifelse(merged_df$income == "", NA, merged_df$income)
+
+# Function to consolidate education values
+consolidate_education <- function(educ) {
+  educ <- tolower(trimws(educ))  # Convert to lowercase and remove leading/trailing spaces
+  
+  # Create mapping for consolidation
+  educ_mapping <- c(
+    "college" = "College",
+    "college graduate" = "College",
+    "postgraduate" = "Postgraduate",
+    "post-graduate" = "Postgraduate",
+    "post grad" = "Postgraduate",
+    "some college" = "Some college",
+    "some high school or less" = "Some high school",
+    "some high school" = "Some high school",
+    "high school graduate" = "High school graduate",
+    "eighth grade or less" = "Some high school"
+  )
+  
+  # Check if the value is one of the problematic values and return NA
+  if (educ %in% c("skipped", "inappropriate", "")) {
+    return(NA)
+  }
+  
+  # Map and consolidate the education values
+  if (educ %in% names(educ_mapping)) {
+    return(educ_mapping[educ])
+  } else {
+    return(NA)  # If not found in mapping, return NA
+  }
+}
+
+# Apply the consolidate_education function to the "educ" column
+merged_df$educ <- sapply(merged_df$educ, consolidate_education)
+
+# Function to consolidate race values
+consolidate_race <- function(race) {
+  race <- tolower(trimws(race))
+  
+  # Create mapping for consolidation
+  race_mapping <- list(
+    "white / caucasian" = "White",
+    "white/caucasian" = "White",
+    "caucasian" = "White",
+    "asian" = "Asian",
+    "black / african american" = "Black",
+    "black/african american" = "Black",
+    "african american" = "Black",
+    "american indian / native american" = "American Indian / Native American",
+    "american indian/native american" = "American Indian / Native American",
+    "native american" = "American Indian / Native American",
+    "native american/indian" = "American Indian / Native American",
+    "hispanic / latino" = "Hispanic / Latino",
+    "hispanic/latino" = "Hispanic / Latino"
+  )
+  
+  # Check if "hispanic" is defined in the mapping and standardize it
+  if ("hispanic" %in% names(race_mapping)) {
+    race_mapping[["hispanic"]] <- "Hispanic / Latino"  # Standardize "hispanic" to "Hispanic / Latino"
+  }
+  
+  # Add other mappings
+  race_mapping[["mexican american"]] <- "Hispanic / Latino"
+  race_mapping[["other"]] <- "Other"
+  race_mapping[["pacific islander"]] <- "Pacific Islander"
+  race_mapping[["oriental"]] <- "Asian"
+  
+  # Map and consolidate the race values
+  if (race %in% names(race_mapping)) {
+    return(race_mapping[[race]])
+  } else {
+    return(race)  # If not found in mapping, return the original value
+  }
+}
+
+# Apply the consolidation function to the "race" column
+merged_df$race <- sapply(merged_df$race, consolidate_race)
+
+# Function to consolidate religion values
+consolidate_religion <- function(religion) {
+  religion <- tolower(trimws(religion))  # Convert to lowercase and remove leading/trailing spaces
+  
+  # Create mapping for consolidation
+  religion_mapping <- list(
+    "no preference / no affiliation" = "No preference / No affiliation",
+    "lds / mormon" = "LDS / Mormon",
+    "protestant" = "Protestant",
+    "catholic" = "Catholic",
+    "other" = "Other",
+    "jewish" = "Jewish",
+    "muslim" = "Muslim",
+    "no preference / no religious affiliation" = "No preference / No religious affiliation",
+    "prefer not to say" = NA,  # Treat "prefer not to say" as NA
+    "skipped" = NA,
+    "inapproriate" = NA,
+    "lds/mormon" = "LDS / Mormon",
+    "very active lds" = "LDS / Mormon",
+    "other lds" = "LDS / Mormon",
+    "no affiliation" = "No preference / No affiliation",
+    "no preference, no religious affiliation" = "No preference / No religious affiliation",
+    " catholic" = "Catholic",
+    "no preference/no religious affiliation" = "No preference / No religious affiliation",
+    "no preference/no affiliation" = "No preference / No affiliation",
+    "mormon" = "LDS / Mormon"
+  )
+  
+  # Map and consolidate the religion values
+  if (religion %in% names(religion_mapping)) {
+    return(religion_mapping[[religion]])
+  } else {
+    return(NA)
+  }
+}
+
+# Apply the consolidate_religion function to the "religion" column
+merged_df$religion <- sapply(merged_df$religion, consolidate_religion)
+
+# Function to consolidate sex values
+consolidate_sex <- function(sex) {
+  sex <- tolower(trimws(sex))  # Convert to lowercase and remove leading/trailing spaces
+  
+  # Create mapping for consolidation
+  sex_mapping <- list(
+    "male" = "Male",
+    "female" = "Female"
+  )
+  
+  # Check if the value is one of the problematic values and return NA
+  if (sex %in% c("", "skipped", "inappropriate")) {
+    return(NA)
+  }
+  
+  # Map and consolidate the sex values
+  if (sex %in% names(sex_mapping)) {
+    return(sex_mapping[[sex]])
+  } else {
+    return(NA)
+  }
+}
+
+# Apply the consolidate_sex function to the "sex" column
+merged_df$sex <- sapply(merged_df$sex, consolidate_sex)
+
+# Function to consolidate ideology values
+consolidate_ideology <- function(ideol) {
+  ideol <- tolower(trimws(ideol))  # Convert to lowercase and remove leading/trailing spaces
+  
+  # Create mapping for consolidation
+  ideology_mapping <- c(
+    "strongly liberal" = "Strongly liberal",
+    "moderately conservative" = "Moderately conservative",
+    "neither, middle of the road" = "Neither, middle of the road",
+    "moderately liberal" = "Moderately liberal",
+    "strongly conservative" = "Strongly conservative",
+    "other" = "Other"
+  )
+  
+  # Check if the value is numeric and not 5, treat as NA
+  if (ideol %in% c("don't know", "skipped", "inappropriate", "")) {
+    return(NA)
+  }
+  
+  # Map and consolidate the ideology values
+  if (ideol %in% names(ideology_mapping)) {
+    return(ideology_mapping[ideol])
+  } else {
+    return(NA)
+  }
+}
+
+# Apply the consolidate_ideology function to the "ideol" column
+merged_df$ideol <- sapply(merged_df$ideol, consolidate_ideology)
+
+# Function to consolidate ideol values
+consolidate_marital_status <- function(marstat) {
+  marstat <- tolower(trimws(marstat))  # Convert to lowercase and remove leading/trailing spaces
+  
+  # Create mapping for consolidation
+  marstat_mapping <- list(
+    "single" = "Single",
+    "married" = "Married",
+    "divorced" = "Divorced",
+    "widowed" = "Widowed",
+    "living with a partner" = "Living with a partner",
+    "living with partner" = "Living with a partner"
+  )
+  
+  # Check if the value is one of the problematic values and return NA
+  if (marstat %in% c("skipped", "inapproriate", "")) {
+    return(NA)
+  }
+  
+  # Map and consolidate the marital status values
+  if (marstat %in% names(marstat_mapping)) {
+    return(marstat_mapping[[marstat]])
+  } else {
+    return(NA)
+  }
+}
+
+# Apply the consolidate_marital_status function to the "marstat" column
+merged_df$marstat <- sapply(merged_df$marstat, consolidate_marital_status)
+
+# Function to consolidate employment status values
+consolidate_empstat <- function(empstat) {
+  empstat <- tolower(trimws(empstat))  # Convert to lowercase and remove leading/trailing spaces
+  
+  # Create mapping for consolidation
+  empstat_mapping <- c(
+    "employed by someone else" = "Employed by someone else",
+    "retired" = "Retired",
+    "self-employed" = "Self-employed",
+    "student" = "Student",
+    "homemaker" = "Homemaker",
+    "unemployed" = "Unemployed",
+    "invalid" = "Invalid",
+    "2" = "Self-employed"
+  )
+  
+  # Check for specific cases first
+  if (empstat %in% c("2")) {
+    return(empstat_mapping[empstat])
+  }
+  
+  if (empstat %in% c("skipped", "inappropriate", "", "prefer not to say")) {
+    return(NA)
+  }
+  
+  # Map and consolidate the employment status values
+  if (empstat %in% names(empstat_mapping)) {
+    return(empstat_mapping[empstat])
+  } else {
+    return(empstat)
+  }
+}
+
+# Apply the consolidate_empstat function to the "empstat" column using sapply
+merged_df$empstat <- sapply(merged_df$empstat, consolidate_empstat)
+
+write.csv(merged_df, "ucep.csv")
